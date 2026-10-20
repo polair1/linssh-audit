@@ -1,8 +1,8 @@
 # linssh-audit
 
 Herramienta propia (estilo OpenVAS/Nessus pero enfocada en SSH grey-box/white-box sobre
-Linux) para acelerar la parte mecánica de un pentest ya autorizado. Pensada para el mismo
-flujo que venís usando en los engagements: VPN + credencial provista por el cliente →
+Linux) para acelerar la parte mecánica de un pentest ya autorizado. Pensada para el
+flujo usado en los engagements: VPN + credencial provista por el cliente →
 enumeración → checklist → evidencia cruda en `pruebas/` → hallazgos confirmados a mano.
 
 ## ⚠️ Uso autorizado únicamente
