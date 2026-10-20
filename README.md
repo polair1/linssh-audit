@@ -82,3 +82,4 @@ python3 linssh_audit.py --host X --user Y --key ~/.ssh/id_rsa --phases 0,1,2 --o
 - Sumar un modo `--diff` contra una corrida anterior para detectar cambios entre retest.
 - Integrar el cálculo de CVSS real (librería `cvss`) directamente sobre los candidatos
   de la Fase 3 una vez que vos confirmás manualmente el vector.
+# linssh-audit
