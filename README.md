@@ -19,6 +19,10 @@ hace responsable de un uso fuera de ese contexto.
   estado, nunca `start`/`stop`/`restart`), un `curl` GET al endpoint de metadata (IMDS).
 - ✅ Login SSH con **un solo intento** por corrida, usando la credencial que vos le pasás —
   no es un brute-forcer de contraseñas.
+- ✅ Verifica la clave del servidor contra `known_hosts` y rechaza servidores desconocidos
+  o con una clave cambiada. Antes de correr la auditoría, agrega la clave del host por un
+  canal confiable y verifica su fingerprint con el cliente; no confíes en una clave solo
+  porque apareció en un escaneo.
 - ❌ No ejecuta `rm`, `chmod`, `chown`, `kill`, `reboot`, `iptables`, ni ninguna escritura
   remota (`echo >`, `tee`, `sed -i`).
 - ❌ No hace privilege escalation ni explota nada — solo enumera y detecta configuraciones
@@ -27,12 +31,27 @@ hace responsable de un uso fuera de ese contexto.
   `hallazgos_PENDIENTE_REVISION.md`, explícitamente etiquetados como pendientes, para que
   vos los valides, les calcules el CVSS real (recomendado: librería `cvss` de RedHat) y
   decidas si entran a tu `hallazgos.md` final.
+- ✅ El chequeo de IMDS hace solamente un `GET` sin token al endpoint base. No solicita
+  tokens, roles, credenciales ni guarda contenido de metadata; un HTTP 200 se reporta
+  únicamente como indicio de posible IMDSv1.
+- ✅ La evidencia nueva se guarda con permisos restrictivos (POSIX `0700`/`0600`;
+  Windows limita las ACL al usuario actual y `SYSTEM`) y no se sobrescriben corridas
+  existentes: usa un `--outdir` nuevo para cada ejecución. Si el sistema no puede aplicar
+  esos permisos, la herramienta informa el error y no continúa.
+- ✅ Las evidencias registran códigos de salida y errores de ejecución; una comprobación
+  que falla no se trata como un resultado positivo. El chequeo de paquetes solo informa
+  nombres cuando detecta actualizaciones disponibles con un gestor reconocido; DNF/YUM
+  usan solo la caché local para evitar refrescar metadatos en el servidor auditado.
 
 ## Instalación
 
 ```bash
 pip install -r requirements.txt
 ```
+
+El servidor SSH debe estar previamente registrado en el `known_hosts` de la cuenta local
+que ejecuta la herramienta. Verifica la fingerprint por un canal confiable antes de
+registrarlo.
 
 ## Uso
 
@@ -53,12 +72,16 @@ python3 linssh_audit.py \
 python3 linssh_audit.py --host X --user Y --key ~/.ssh/id_rsa --phases 0,1,2 --outdir ./host_X
 ```
 
+`--port` admite valores entre 1 y 65535; `--rate` debe ser finito y no negativo; las fases
+deben ser números únicos entre 0 y 4. `--password` y `--ask-password` no se pueden usar a
+la vez; se recomienda el modo interactivo para evitar dejar la contraseña en el historial.
+
 ## Fases
 
 | Fase | Qué hace |
 |---|---|
 | 0 — Preflight | Ping/conectividad a un IP de la VPN (opcional), puerto SSH abierto, prueba la credencial real, revisa contexto de sudo. Si falla acá, corta antes de gastar tiempo en el resto. |
-| 1 — Recon | SO, kernel, red, servicios escuchando, procesos, paquetes instalados. |
+| 1 — Recon | SO, kernel, red, servicios escuchando, paquetes instalados. |
 | 2 — Enumeración | usuarios/grupos, sudoers, cron, SUID/SGID, archivos/directorios mundo-escribibles, capabilities, permisos de archivos sensibles, `.env`/`.git` mundo-legibles, servicios systemd activos. |
 | 3 — Checklist de vulns | Batería de chequeos de misconfiguración conocida (sshd hardening, IMDS, Docker socket, datastores locales sin auth, PwnKit/polkit, auditd, parches pendientes, PATH hijacking, secretos en logs, NTP). Cada hit se guarda como **candidato**, no como hallazgo confirmado. |
 | 4 — Reporte | Vuelca un borrador `hallazgos_PENDIENTE_REVISION.md` con los candidatos de la Fase 3, cada uno apuntando a su archivo de evidencia cruda en `pruebas/`. |
