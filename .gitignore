@@ -1,0 +1,25 @@
+# Evidencia real de clientes y salidas de corridas — nunca subir esto a un repo público
+*_PENDIENTE_REVISION.md
+pruebas/
+output/
+outputs/
+results/
+*.outdir/
+Harvest_*/
+COMEDAPP*/
+*_17*/
+*_10.*/
+
+# Claves privadas / credenciales
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+*_key
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
